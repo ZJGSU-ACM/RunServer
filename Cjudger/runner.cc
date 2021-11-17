@@ -50,6 +50,8 @@
 
 const int DEBUG = 0;
 
+unsigned int random_id = 0;
+
 //record system call
 //标志：是否记录系统系统调用
 static char record_call = 0;
@@ -79,6 +81,8 @@ void write_log(const char *fmt, ...) {
         fprintf(stderr, "openfile error!\n");
         return;
     }
+
+    fprintf(fp, "[%u]: ", random_id);
 
     va_start(ap, fmt);
     vsprintf(buffer, fmt, ap);
@@ -608,6 +612,8 @@ void print_call_array() {
 //judger 程序入口
 int main(int argc, char **argv) {
 
+    random_id = (unsigned int)time(nullptr);
+
     init_parameters(argc, argv);
 
     write_log("time: %d mem: %d\n", time_lmt, mem_lmt);
@@ -636,8 +642,12 @@ int main(int argc, char **argv) {
     int usedtime = 0, topmemory = 0;
     int count = 0;
 
+    int empty = 1;
     // read files and run
     for (; (judge_flag == JudgeAC) && (dirp = readdir(dp)) != NULL;) {
+
+        empty = 0;
+        write_log("find file: %s", dirp->d_name);
 
         char infile[BUFFER_SIZE];
         char outfile[BUFFER_SIZE];
@@ -652,6 +662,8 @@ int main(int argc, char **argv) {
         if (DEBUG) {
             fprintf(stderr, "%s\n", infile);
         }
+
+        write_log("run solution count: %d", count);
 
         pid_t pidApp = fork();
         if (pidApp == 0) {
@@ -668,6 +680,7 @@ int main(int argc, char **argv) {
     }
 
     if (!count) {
+        write_log("solutions empty, flag: %d", empty);
         judge_flag = JudgeNA;
     }
 

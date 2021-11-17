@@ -119,18 +119,56 @@ func JudgeForever() {
 			info := SyncControll.GetFrontAndRemove()
 			go Judge(*info) //并行判题
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
-var VJs = []vjudger.Vjudger{&ZJGSUJudger{}, &vjudger.HDUJudger{}, &vjudger.PKUJudger{}}
+type VJSupplier interface {
+	Match(string) bool
+	Get() vjudger.Vjudger
+}
+
+type ZJGSUJudgerSupplier struct {
+}
+
+func (z *ZJGSUJudgerSupplier) Match(token string) bool {
+	return z.Get().Match(token)
+}
+
+func (z *ZJGSUJudgerSupplier) Get() vjudger.Vjudger {
+	return &ZJGSUJudger{}
+}
+
+type HDUJudgerSupplier struct {
+}
+
+func (z *HDUJudgerSupplier) Match(token string) bool {
+	return z.Get().Match(token)
+}
+
+func (z *HDUJudgerSupplier) Get() vjudger.Vjudger {
+	return &vjudger.HDUJudger{}
+}
+
+type PKUJudgerSupplier struct {
+}
+
+func (z *PKUJudgerSupplier) Match(token string) bool {
+	return z.Get().Match(token)
+}
+
+func (z *PKUJudgerSupplier) Get() vjudger.Vjudger {
+	return &vjudger.PKUJudger{}
+}
+
+var VJs = []VJSupplier{&ZJGSUJudgerSupplier{}, &HDUJudgerSupplier{}, &PKUJudgerSupplier{}}
 
 func Judge(info Info) {
 	user := &solution{}
 	user.Init(info)
 	for _, vj := range VJs {
 		if vj.Match(user.GetOJ()) {
-			vj.Run(user)
+			vj.Get().Run(user)
 			break
 		}
 	}
